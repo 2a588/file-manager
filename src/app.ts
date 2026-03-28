@@ -60,9 +60,9 @@ app.get('/', (_req, res) => {
   });
 });
 
-app.listen(config.port, () => {
-  logger.info(`服务器运行在 http://localhost:${config.port}`);
-  logger.info(`API文档: http://localhost:${config.port}/`);
+app.listen(config.port, '0.0.0.0', () => {
+  logger.info(`服务器运行在 http://0.0.0.0:${config.port}`);
+  logger.info(`API文档: http://0.0.0.0:${config.port}/`);
 });
 
 export default app;
