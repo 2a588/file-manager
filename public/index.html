@@ -405,6 +405,461 @@
       color: #333;
       margin: 0;
     }
+
+    /* 响应式设计 - 媒体查询 */
+    
+    /* 平板端 (768px - 1024px) */
+    @media (max-width: 1024px) {
+      .container {
+        padding: 15px;
+      }
+      
+      .header {
+        padding: 15px;
+      }
+      
+      .header h1 {
+        font-size: 20px;
+      }
+      
+      .stats-grid,
+      .stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .files-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
+      
+      .toolbar {
+        padding: 12px;
+      }
+      
+      .toolbar input,
+      .toolbar select {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      
+      .toolbar input {
+        min-width: 180px;
+      }
+      
+      .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      
+      .nav-tabs {
+        padding: 8px;
+        gap: 8px;
+      }
+      
+      .nav-tab {
+        padding: 10px 20px;
+        font-size: 13px;
+      }
+      
+      .preview-content {
+        width: 95%;
+        max-width: 800px;
+      }
+      
+      .modal-content {
+        width: 95%;
+        max-width: 450px;
+        padding: 25px;
+      }
+    }
+    
+    /* 移动端 (< 768px) */
+    @media (max-width: 767px) {
+      body {
+        font-size: 14px;
+      }
+      
+      .header {
+        padding: 12px 15px;
+        text-align: center;
+      }
+      
+      .header h1 {
+        font-size: 18px;
+        margin-bottom: 3px;
+      }
+      
+      .header p {
+        font-size: 12px;
+      }
+      
+      .container {
+        padding: 10px;
+      }
+      
+      /* 统计卡片 - 移动端显示为2列 */
+      .stats-grid,
+      .stats-overview {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+      
+      .stat-card {
+        padding: 15px;
+        border-radius: 10px;
+      }
+      
+      .stat-card .label {
+        font-size: 12px;
+      }
+      
+      .stat-card .value {
+        font-size: 22px;
+      }
+      
+      .stat-card .sub {
+        font-size: 11px;
+      }
+      
+      /* 工具栏 - 移动端垂直布局 */
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px;
+        gap: 8px;
+      }
+      
+      .toolbar input,
+      .toolbar select {
+        width: 100%;
+        min-width: unset;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      
+      .view-mode-toggle {
+        margin-left: 0;
+        justify-content: center;
+        order: -1;
+      }
+      
+      .view-mode-toggle button {
+        padding: 6px 10px;
+        font-size: 14px;
+      }
+      
+      .toolbar .btn {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+      }
+      
+      /* 文件网格 - 移动端1列 */
+      .files-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      
+      .file-card {
+        padding: 12px;
+        border-radius: 10px;
+      }
+      
+      .file-card .icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      
+      .file-card .name {
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      
+      .file-card .meta {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+      
+      .file-card .tag {
+        font-size: 10px;
+        padding: 2px 6px;
+      }
+      
+      /* 列表模式 - 移动端优化 */
+      .files-grid.list-view .file-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 12px;
+      }
+      
+      .files-grid.list-view .file-card .icon {
+        font-size: 24px;
+      }
+      
+      .files-grid.list-view .file-card .name {
+        width: 100%;
+        font-size: 14px;
+      }
+      
+      .files-grid.list-view .file-card .meta {
+        width: 100%;
+        text-align: left;
+        min-width: unset;
+      }
+      
+      .files-grid.list-view .file-card .tags {
+        width: 100%;
+        justify-content: flex-start;
+        min-width: unset;
+      }
+      
+      /* 导航标签 - 移动端滚动 */
+      .nav-tabs {
+        padding: 6px;
+        gap: 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .nav-tab {
+        padding: 8px 16px;
+        font-size: 13px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      
+      /* 分页组件 - 移动端优化 */
+      .pagination {
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px;
+        margin-top: 15px;
+      }
+      
+      .pagination button {
+        width: 100%;
+        padding: 10px;
+      }
+      
+      .pagination .page-info {
+        font-size: 13px;
+      }
+      
+      .pagination select {
+        width: 100%;
+        padding: 10px;
+      }
+      
+      /* 模态窗口 - 移动端全屏 */
+      .scan-modal .modal-content,
+      .preview-modal .preview-content {
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+        margin: 0;
+      }
+      
+      .preview-modal .preview-content {
+        flex-direction: column;
+      }
+      
+      .preview-header {
+        padding: 12px 15px;
+      }
+      
+      .preview-header h3 {
+        font-size: 14px;
+      }
+      
+      .preview-body {
+        padding: 15px;
+        min-height: 250px;
+      }
+      
+      .preview-footer {
+        padding: 12px 15px;
+        gap: 8px;
+      }
+      
+      .preview-footer .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+      }
+      
+      /* 音频播放器 - 移动端优化 */
+      .audio-player {
+        padding: 20px;
+      }
+      
+      .audio-player .audio-icon {
+        font-size: 48px;
+      }
+      
+      .audio-player .audio-name {
+        font-size: 16px;
+      }
+      
+      .text-content {
+        height: 60vh;
+        padding: 15px;
+        font-size: 13px;
+      }
+      
+      /* 统计区块 - 移动端优化 */
+      .stats-section {
+        padding: 15px;
+        margin-bottom: 15px;
+      }
+      
+      .stats-section h3 {
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+      
+      .top-file-item {
+        padding: 8px;
+        gap: 10px;
+      }
+      
+      .top-file-item .rank {
+        font-size: 16px;
+        min-width: 25px;
+      }
+      
+      .top-file-item .name {
+        font-size: 13px;
+      }
+      
+      .top-file-item .stats {
+        font-size: 12px;
+      }
+      
+      .type-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      
+      .type-stat-item {
+        padding: 12px;
+      }
+      
+      .type-stat-item .type-name {
+        font-size: 13px;
+      }
+      
+      .type-stat-item .type-value {
+        font-size: 14px;
+      }
+      
+      /* Toast通知 - 移动端居中 */
+      .toast {
+        left: 15px;
+        right: 15px;
+        bottom: 15px;
+        text-align: center;
+        padding: 12px 20px;
+      }
+      
+      /* 标签筛选 - 移动端优化 */
+      .tag-filter {
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      
+      .tag-filter .tag {
+        padding: 4px 10px;
+        font-size: 12px;
+      }
+      
+      /* 空状态 - 移动端优化 */
+      .empty-state {
+        padding: 40px 15px;
+      }
+      
+      .empty-state .icon {
+        font-size: 48px;
+        margin-bottom: 12px;
+      }
+      
+      .empty-state h3 {
+        font-size: 16px;
+      }
+      
+      .empty-state p {
+        font-size: 13px;
+      }
+      
+      /* 加载状态 - 移动端优化 */
+      .loading {
+        padding: 30px;
+      }
+      
+      .spinner {
+        width: 32px;
+        height: 32px;
+      }
+    }
+    
+    /* 小屏幕移动端 (< 480px) */
+    @media (max-width: 480px) {
+      .stats-grid,
+      .stats-overview {
+        grid-template-columns: 1fr;
+      }
+      
+      .stat-card {
+        padding: 12px;
+      }
+      
+      .stat-card .value {
+        font-size: 20px;
+      }
+      
+      .type-stats {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-tab {
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+    }
+    
+    /* 触摸设备优化 */
+    @media (hover: none) and (pointer: coarse) {
+      .btn:hover,
+      .nav-tab:hover,
+      .tag:hover,
+      .file-card:hover,
+      .top-file-item:hover {
+        background: inherit;
+        transform: none;
+      }
+      
+      .btn:active,
+      .nav-tab:active,
+      .tag:active,
+      .file-card:active,
+      .top-file-item:active {
+        background: #f0f0f0;
+        transform: scale(0.98);
+      }
+      
+      .btn-primary:active {
+        background: #5a6fd6;
+      }
+      
+      .btn-danger:active {
+        background: #ee5a5a;
+      }
+      
+      .btn-secondary:active {
+        background: #d0d0d0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1048,6 +1503,126 @@
       if (e.target.id === 'previewModal') {
         closePreview();
       }
+    });
+
+    // 触摸设备优化
+    function initTouchOptimizations() {
+      // 检测触摸设备
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      
+      if (isTouchDevice) {
+        // 为模态窗口添加滑动关闭支持
+        addSwipeToClose();
+        
+        // 改进触摸反馈
+        addTouchFeedback();
+        
+        // 优化导航标签滚动
+        optimizeNavScroll();
+      }
+    }
+
+    // 添加滑动关闭功能
+    function addSwipeToClose() {
+      let startY = 0;
+      let startX = 0;
+      const threshold = 50; // 滑动阈值
+      
+      const previewModal = document.getElementById('previewModal');
+      const scanModal = document.getElementById('scanModal');
+      
+      [previewModal, scanModal].forEach(modal => {
+        if (!modal) return;
+        
+        modal.addEventListener('touchstart', (e) => {
+          startY = e.touches[0].clientY;
+          startX = e.touches[0].clientX;
+        }, { passive: true });
+        
+        modal.addEventListener('touchend', (e) => {
+          if (!startY || !startX) return;
+          
+          const endY = e.changedTouches[0].clientY;
+          const endX = e.changedTouches[0].clientX;
+          const diffY = endY - startY;
+          const diffX = endX - startX;
+          
+          // 检测向下滑动（垂直距离大于水平距离，且向下滑动超过阈值）
+          if (Math.abs(diffY) > Math.abs(diffX) && diffY > threshold) {
+            // 检查是否从内容区域开始滑动
+            const target = e.target;
+            if (target.closest('.modal-content') || target.closest('.preview-content')) {
+              if (modal === previewModal) {
+                closePreview();
+              } else if (modal === scanModal) {
+                closeScanModal();
+              }
+            }
+          }
+          
+          startY = 0;
+          startX = 0;
+        }, { passive: true });
+      });
+    }
+
+    // 添加触摸反馈
+    function addTouchFeedback() {
+      // 为按钮和可点击元素添加触摸反馈
+      const interactiveElements = document.querySelectorAll('.btn, .nav-tab, .file-card, .top-file-item, .tag-filter .tag');
+      
+      interactiveElements.forEach(el => {
+        el.addEventListener('touchstart', function() {
+          this.style.transform = 'scale(0.98)';
+          this.style.opacity = '0.9';
+        }, { passive: true });
+        
+        el.addEventListener('touchend', function() {
+          this.style.transform = '';
+          this.style.opacity = '';
+        }, { passive: true });
+        
+        el.addEventListener('touchcancel', function() {
+          this.style.transform = '';
+          this.style.opacity = '';
+        }, { passive: true });
+      });
+    }
+
+    // 优化导航标签滚动
+    function optimizeNavScroll() {
+      const navTabs = document.querySelector('.nav-tabs');
+      if (!navTabs) return;
+      
+      let isScrolling = false;
+      let startX = 0;
+      let scrollLeft = 0;
+      
+      navTabs.addEventListener('touchstart', (e) => {
+        isScrolling = true;
+        startX = e.touches[0].pageX - navTabs.offsetLeft;
+        scrollLeft = navTabs.scrollLeft;
+      }, { passive: true });
+      
+      navTabs.addEventListener('touchmove', (e) => {
+        if (!isScrolling) return;
+        const x = e.touches[0].pageX - navTabs.offsetLeft;
+        const walk = (x - startX) * 2; // 滚动速度
+        navTabs.scrollLeft = scrollLeft - walk;
+      }, { passive: true });
+      
+      navTabs.addEventListener('touchend', () => {
+        isScrolling = false;
+      }, { passive: true });
+      
+      // 隐藏滚动条但保持可滚动
+      navTabs.style.scrollbarWidth = 'none';
+      navTabs.style.msOverflowStyle = 'none';
+    }
+
+    // 页面加载完成后初始化触摸优化
+    document.addEventListener('DOMContentLoaded', () => {
+      initTouchOptimizations();
     });
     
     // 打开扫描弹窗
