@@ -1,6 +1,6 @@
 export const config = {
   port: 3000,
-  rootPath: '/mnt/d/mCloudDownload',
+  rootPath: '/home/ubuntu/app/file-manager',
   database: {
     path: './data/files.db',
   },
