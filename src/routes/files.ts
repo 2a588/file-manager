@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { db } from '../services/database';
+import { db, FileRow } from '../services/database';
 import { join } from 'path';
-import { createReadStream, statSync } from 'fs';
+import { createReadStream, statSync, unlinkSync } from 'fs';
 
 export const filesRouter = Router();
 
@@ -55,6 +55,9 @@ filesRouter.post('/batch-delete', (req, res) => {
   if (!ids || !Array.isArray(ids) || ids.length === 0) {
     return res.status(400).json({ success: false, message: '请提供要删除的文件ID列表' });
   }
+  if (ids.some((id: any) => typeof id !== 'number' || isNaN(id))) {
+    return res.status(400).json({ success: false, message: 'ID列表包含无效值' });
+  }
   const deleted = db.batchDeleteFiles(ids);
   res.json({ success: true, message: `已删除 ${deleted} 个文件` });
 });
@@ -100,7 +103,8 @@ filesRouter.get('/:id', (req, res) => {
 
 filesRouter.get('/:id/download', (req, res) => {
   const id = parseInt(req.params.id);
-  const file = db.getFileById(id) as any;
+  if (isNaN(id)) return res.status(400).json({ success: false, message: '无效的ID' });
+  const file = db.getFileById(id) as FileRow;
   if (!file) {
     return res.status(404).json({ success: false, message: '文件未找到' });
   }
@@ -109,7 +113,8 @@ filesRouter.get('/:id/download', (req, res) => {
 
 filesRouter.get('/:id/preview', (req, res) => {
   const id = parseInt(req.params.id);
-  const file = db.getFileById(id) as any;
+  if (isNaN(id)) return res.status(400).json({ success: false, message: '无效的ID' });
+  const file = db.getFileById(id) as FileRow;
   if (!file) {
     return res.status(404).json({ success: false, message: '文件未找到' });
   }
@@ -151,10 +156,21 @@ filesRouter.get('/:id/preview', (req, res) => {
 
 filesRouter.delete('/:id', (req, res) => {
   const id = parseInt(req.params.id);
-  const file = db.getFileById(id) as any;
+  if (isNaN(id)) return res.status(400).json({ success: false, message: '无效的ID' });
+  const file = db.getFileById(id) as FileRow;
   if (!file) {
     return res.status(404).json({ success: false, message: '文件未找到' });
   }
+
+  const deleteFile = req.query.deleteFile === 'true';
+  if (deleteFile) {
+    try {
+      unlinkSync(file.original_path);
+    } catch (err) {
+      return res.status(500).json({ success: false, message: '删除物理文件失败' });
+    }
+  }
+
   db.deleteFile(id);
-  res.json({ success: true, message: '已删除文件记录' });
+  res.json({ success: true, message: deleteFile ? '已删除记录和物理文件' : '已删除文件记录' });
 });

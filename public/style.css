@@ -1,10 +1,143 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>文件管理系统</title>
-  <link rel="stylesheet" href="style.css">
+
+    :root {
+      --bg: #f5f7fa;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --text-secondary: #888888;
+      --text-muted: #666666;
+      --border: #e0e0e0;
+      --shadow: rgba(0,0,0,0.08);
+      --shadow-hover: rgba(0,0,0,0.12);
+      --primary: #667eea;
+      --primary-hover: #5a6fd6;
+      --danger: #ff6b6b;
+      --danger-hover: #ee5a5a;
+      --tag-bg: #f0f0f0;
+      --overlay: rgba(0,0,0,0.5);
+      --header-from: #667eea;
+      --header-to: #764ba2;
+    }
+    .dark-mode {
+      --bg: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --text: #e0e0e0;
+      --text-secondary: #999999;
+      --text-muted: #777777;
+      --border: #2a2a4a;
+      --shadow: rgba(0,0,0,0.3);
+      --shadow-hover: rgba(0,0,0,0.4);
+      --tag-bg: #2a2a4a;
+      --overlay: rgba(0,0,0,0.7);
+      --header-from: #1a1a2e;
+      --header-to: #0f0f1a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); transition: background 0.3s, color 0.3s; }
+    
+    .header { background: linear-gradient(135deg, var(--header-from) 0%, var(--header-to) 100%); color: white; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+    .header-left h1 { font-size: 24px; margin-bottom: 5px; }
+    .header-left p { opacity: 0.9; font-size: 14px; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .dark-toggle { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: background 0.2s; }
+    .dark-toggle:hover { background: rgba(255,255,255,0.3); }
+    
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px var(--shadow); transition: background 0.3s; }
+    .stat-card .label { color: var(--text-secondary); font-size: 13px; margin-bottom: 5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: var(--text); }
+    .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+    
+    .toolbar { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px var(--shadow); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; transition: background 0.3s; }
+    .toolbar input, .toolbar select { padding: 10px 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+    .toolbar input { flex: 1; min-width: 200px; }
+    .toolbar select { min-width: 120px; }
+    
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: #d0d0d0; }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    
+    .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+    .file-card { background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px var(--shadow); transition: all 0.2s; cursor: pointer; position: relative; }
+    .file-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--shadow-hover); }
+    .file-card .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .file-card .card-check { margin-right: 8px; margin-top: 2px; }
+    .file-card .icon { font-size: 40px; margin-bottom: 10px; }
+    .file-card .name { font-weight: 600; color: var(--text); margin-bottom: 5px; word-break: break-all; }
+    .file-card .meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .file-card .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .file-card .tag { background: var(--tag-bg); padding: 3px 8px; border-radius: 4px; font-size: 11px; color: var(--text-muted); }
+    
+    .file-card .type-media { color: #ff6b6b; }
+    .file-card .type-document { color: #4ecdc4; }
+    .file-card .type-html { color: #ffd93d; }
+    .file-card .type-image { color: #45b7d1; }
+    
+    .bookmark-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px; opacity: 0.4; transition: all 0.2s; line-height: 1; }
+    .bookmark-btn:hover { opacity: 0.8; transform: scale(1.2); }
+    .bookmark-btn.active { opacity: 1; }
+    
+    .batch-bar { display: none; background: var(--primary); color: white; border-radius: 8px; padding: 10px 15px; margin-bottom: 10px; align-items: center; gap: 15px; flex-wrap: wrap; }
+    .batch-bar.show { display: flex; }
+    .batch-bar .count { font-weight: 600; }
+    .batch-bar .btn { background: rgba(255,255,255,0.2); color: white; }
+    .batch-bar .btn:hover { background: rgba(255,255,255,0.3); }
+    
+    .scan-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay); z-index: 100; justify-content: center; align-items: center; }
+    .scan-modal.active { display: flex; }
+    .modal-content { background: var(--card-bg); border-radius: 16px; padding: 30px; width: 90%; max-width: 500px; }
+    .modal-content h2 { margin-bottom: 20px; color: var(--text); }
+    .modal-content input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; font-size: 14px; background: var(--bg); color: var(--text); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    
+    .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .spinner { display: inline-block; width: 40px; height: 40px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 15px 25px; border-radius: 8px; z-index: 200; display: none; }
+    .toast.success { background: #4ecdc4; }
+    .toast.error { background: var(--danger); }
+    
+    .tag-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+    .tag-filter .tag { padding: 6px 12px; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+    .tag-filter .tag:hover, .tag-filter .tag.active { background: var(--primary); color: white; }
+    
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+    .empty-state .icon { font-size: 60px; margin-bottom: 15px; }
+
+    /* Folder tree sidebar */
+    .layout-wrapper { display: flex; gap: 20px; }
+    .sidebar { width: 260px; flex-shrink: 0; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px var(--shadow); padding: 15px; max-height: 70vh; overflow-y: auto; display: none; transition: background 0.3s; }
+    .sidebar.show { display: block; }
+    .sidebar h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .sidebar-content { width: 100%; }
+    .folder-item { padding: 6px 10px; cursor: pointer; border-radius: 6px; color: var(--text); font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .folder-item:hover { background: var(--tag-bg); }
+    .folder-item.active { background: var(--primary); color: white; }
+    .folder-item .arrow { font-size: 10px; width: 14px; text-align: center; transition: transform 0.2s; }
+    .folder-item .arrow.expanded { transform: rotate(90deg); }
+    .folder-children { padding-left: 20px; }
+    .folder-children.hidden { display: none; }
+    .main-content { flex: 1; min-width: 0; }
+
+    /* Duplicates / Recent */
+    .dup-group { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px var(--shadow); }
+    .dup-group h4 { font-size: 14px; margin-bottom: 8px; color: var(--text); }
+    .dup-group .dup-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .dup-file { padding: 6px 10px; background: var(--bg); border-radius: 6px; margin-bottom: 4px; font-size: 13px; word-break: break-all; cursor: pointer; }
+    .dup-file:hover { opacity: 0.8; }
+
+    .recent-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .recent-item { background: var(--card-bg); border-radius: 10px; padding: 12px; box-shadow: 0 1px 4px var(--shadow); cursor: pointer; transition: all 0.2s; }
+    .recent-item:hover { transform: translateY(-1px); }
 
     /* 分页组件 */
     .pagination {
@@ -797,232 +930,4 @@
         background: #d0d0d0;
       }
     }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">
-      <h1>📁 文件管理系统</h1>
-      <p>智能管理你的本地文件 · 支持视频、音频、文档、图片、HTML</p>
-    </div>
-    <div class="header-actions">
-      <button class="dark-toggle" onclick="toggleDarkMode()" title="切换暗色模式">🌙</button>
-    </div>
-  </div>
   
-  <div class="container">
-    <!-- 导航标签 -->
-    <div class="nav-tabs">
-      <button class="nav-tab active" onclick="switchTab('files')">📁 文件管理</button>
-      <button class="nav-tab" onclick="switchTab('recent')">🕐 最近文件</button>
-      <button class="nav-tab" onclick="switchTab('stats')">📊 统计分析</button>
-      <button class="nav-tab" onclick="switchTab('duplicates')">🔁 重复文件</button>
-    </div>
-
-    <!-- 文件管理页面 -->
-    <div id="filesPage" class="page active">
-      <!-- 统计卡片 -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="label">总文件数</div>
-          <div class="value" id="totalFiles">-</div>
-          <div class="sub">已索引文件</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">媒体文件</div>
-          <div class="value" id="mediaCount">-</div>
-          <div class="sub">视频 · 音频</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">文档文件</div>
-          <div class="value" id="docCount">-</div>
-          <div class="sub">PDF · Word · TXT</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">HTML文件</div>
-          <div class="value" id="htmlCount">-</div>
-          <div class="sub">网页文件</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">图片文件</div>
-          <div class="value" id="imageCount">-</div>
-          <div class="sub">JPG · PNG · GIF 等</div>
-        </div>
-      </div>
-      
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <input type="text" id="searchInput" placeholder="搜索文件名...">
-        <select id="typeFilter">
-          <option value="">所有类型</option>
-          <option value="media">媒体文件</option>
-          <option value="image">图片文件</option>
-          <option value="document">文档文件</option>
-          <option value="html">HTML文件</option>
-        </select>
-        <select id="tagFilter">
-          <option value="">所有标签</option>
-        </select>
-        <select id="sortBy" onchange="setSort()">
-          <option value="scanned_at">扫描时间</option>
-          <option value="filename">文件名</option>
-          <option value="file_size">文件大小</option>
-          <option value="modified_at">修改时间</option>
-        </select>
-        <select id="sortOrder" onchange="setSort()">
-          <option value="DESC">降序</option>
-          <option value="ASC">升序</option>
-        </select>
-        <div class="view-mode-toggle">
-          <button id="gridViewBtn" onclick="setViewMode('grid')" title="图标视图">📊</button>
-          <button id="listViewBtn" onclick="setViewMode('list')" title="列表视图">📋</button>
-        </div>
-        <button class="btn btn-secondary" onclick="toggleFolderSidebar()" title="文件夹树">📂 目录</button>
-        <button class="btn btn-primary" onclick="openScanModal()">🔍 扫描文件</button>
-        <button class="btn btn-secondary" onclick="refreshFiles()">🔄 刷新</button>
-      </div>
-      
-      <!-- 批量操作栏 -->
-      <div id="batchBar" class="batch-bar">
-        <span class="count">已选择 <span id="selectedCount">0</span> 个文件</span>
-        <button class="btn btn-sm" onclick="batchDelete()">🗑️ 批量删除</button>
-        <button class="btn btn-sm" onclick="clearSelection()">取消选择</button>
-      </div>
-      
-      <!-- 文件列表区域（带侧栏） -->
-      <div class="layout-wrapper">
-        <div id="folderSidebar" class="sidebar">
-          <h3>📂 文件夹</h3>
-          <div id="folderTree" class="sidebar-content">
-            <div class="loading"><div class="spinner"></div></div>
-          </div>
-        </div>
-        <div class="main-content">
-          <div id="filesContainer" class="files-grid">
-            <div class="loading">
-              <div class="spinner"></div>
-              <p>加载中...</p>
-            </div>
-          </div>
-          
-          <!-- 分页组件 -->
-          <div class="pagination">
-            <button id="prevPage" onclick="changePage(-1)">上一页</button>
-            <span class="page-info">
-              第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">1</span> 页
-            </span>
-            <button id="nextPage" onclick="changePage(1)">下一页</button>
-            <select id="pageSize" onchange="changePageSize()">
-              <option value="10">10条/页</option>
-              <option value="20">20条/页</option>
-              <option value="50">50条/页</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 统计页面 -->
-    <div id="statsPage" class="page">
-      <div class="stats-overview">
-        <div class="stat-card">
-          <div class="label">总点击次数</div>
-          <div class="value" id="totalClicks">-</div>
-          <div class="sub">所有文件被点击次数</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">总播放次数</div>
-          <div class="value" id="totalPlays">-</div>
-          <div class="sub">视频/音频播放次数</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">今日点击</div>
-          <div class="value" id="todayClicks">-</div>
-          <div class="sub">今天文件被点击次数</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">今日播放</div>
-          <div class="value" id="todayPlays">-</div>
-          <div class="sub">今天视频/音频播放次数</div>
-        </div>
-      </div>
-      
-      <div class="stats-section">
-        <h3>🔥 热门文件 TOP 10</h3>
-        <div id="topFiles" class="top-files-list">
-          <div class="loading"><div class="spinner"></div></div>
-        </div>
-      </div>
-      
-      <div class="stats-section">
-        <h3>📊 按类型统计</h3>
-        <div id="typeStats" class="type-stats">
-          <div class="loading"><div class="spinner"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 最近文件页面 -->
-    <div id="recentPage" class="page">
-      <div class="stats-section">
-        <h3>🕐 最近 7 天添加的文件</h3>
-        <div id="recentFiles" class="recent-list">
-          <div class="loading"><div class="spinner"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 重复文件页面 -->
-    <div id="duplicatesPage" class="page">
-      <div class="stats-section">
-        <h3>🔁 重复文件检测</h3>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">以下文件具有相同的文件名和大小，可能是重复文件</p>
-        <div id="duplicateFiles">
-          <div class="loading"><div class="spinner"></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- 扫描弹窗 -->
-  <div id="scanModal" class="scan-modal">
-    <div class="modal-content">
-      <h2>扫描文件目录</h2>
-      <input type="text" id="scanPath" placeholder="输入文件目录路径，例如: /home/user/documents">
-      <p style="font-size: 12px; color: #888; margin-top: -10px;">
-        支持的格式: MP4, MP3, JPG, PNG, PDF, TXT, DOC, HTML 等
-      </p>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeScanModal()">取消</button>
-        <button class="btn btn-primary" id="scanBtn" onclick="startScan()">开始扫描</button>
-      </div>
-      <div id="scanProgress" style="display: none; margin-top: 15px;">
-        <div class="spinner" style="width: 20px; height: 20px;"></div>
-        <span id="scanStatus">扫描中...</span>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Toast通知 -->
-  <div id="toast" class="toast"></div>
-
-  <!-- 预览模态窗口 -->
-  <div id="previewModal" class="preview-modal">
-    <div class="preview-content">
-      <div class="preview-header">
-        <h3 id="previewTitle">文件预览</h3>
-        <button class="close-btn" onclick="closePreview()">×</button>
-      </div>
-      <div class="preview-body" id="previewBody">
-        <!-- 动态加载预览内容 -->
-      </div>
-      <div class="preview-footer">
-        <a id="previewDownloadBtn" class="btn btn-secondary" href="#" target="_blank">下载</a>
-        <button class="btn btn-secondary" onclick="closePreview()">关闭</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
-</body>
-</html>

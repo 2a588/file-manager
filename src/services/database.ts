@@ -3,6 +3,23 @@ import { mkdirSync, existsSync } from 'fs';
 import { dirname } from 'path';
 import { config } from '../../config/config';
 
+export interface CountResult { count: number; }
+export interface FileRow {
+  id: number;
+  filename: string;
+  original_path: string;
+  relative_path: string;
+  file_type: string;
+  mime_type: string | null;
+  file_extension: string | null;
+  file_size: number | null;
+  parent_folder: string | null;
+  folder_hierarchy: string | null;
+  created_at: string;
+  modified_at: string | null;
+  scanned_at: string;
+}
+
 class DatabaseService {
   private db: Database;
 
@@ -182,8 +199,8 @@ class DatabaseService {
     return this.db.prepare('SELECT * FROM files ORDER BY scanned_at DESC').all();
   }
 
-  getFileById(id: number) {
-    return this.db.prepare('SELECT * FROM files WHERE id = ?').get(id);
+  getFileById(id: number): FileRow | undefined {
+    return this.db.prepare('SELECT * FROM files WHERE id = ?').get(id) as FileRow | undefined;
   }
 
   searchFiles(keyword: string) {
@@ -217,7 +234,7 @@ class DatabaseService {
   }
 
   getStats() {
-    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files').get() as any).count;
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files').get() as CountResult).count;
     const byType = this.db.prepare('SELECT file_type, COUNT(*) as count FROM files GROUP BY file_type').all();
     return { total, byType };
   }
@@ -236,17 +253,17 @@ class DatabaseService {
 
   // 获取单个文件统计
   getFileStats(fileId: number): { clicks: number, plays: number } {
-    const clicks = this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE file_id = ? AND action_type = ?').get(fileId, 'click') as any;
-    const plays = this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE file_id = ? AND action_type = ?').get(fileId, 'play') as any;
+    const clicks = this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE file_id = ? AND action_type = ?').get(fileId, 'click') as CountResult;
+    const plays = this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE file_id = ? AND action_type = ?').get(fileId, 'play') as CountResult;
     return { clicks: clicks.count, plays: plays.count };
   }
 
   // 获取总体统计
   getOverallStats(): { totalClicks: number, totalPlays: number, todayClicks: number, todayPlays: number } {
-    const totalClicks = (this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE action_type = ?').get('click') as any).count;
-    const totalPlays = (this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE action_type = ?').get('play') as any).count;
-    const todayClicks = (this.db.prepare("SELECT COUNT(*) as count FROM file_stats WHERE action_type = ? AND date(created_at) = date('now')").get('click') as any).count;
-    const todayPlays = (this.db.prepare("SELECT COUNT(*) as count FROM file_stats WHERE action_type = ? AND date(created_at) = date('now')").get('play') as any).count;
+    const totalClicks = (this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE action_type = ?').get('click') as CountResult).count;
+    const totalPlays = (this.db.prepare('SELECT COUNT(*) as count FROM file_stats WHERE action_type = ?').get('play') as CountResult).count;
+    const todayClicks = (this.db.prepare("SELECT COUNT(*) as count FROM file_stats WHERE action_type = ? AND date(created_at) = date('now')").get('click') as CountResult).count;
+    const todayPlays = (this.db.prepare("SELECT COUNT(*) as count FROM file_stats WHERE action_type = ? AND date(created_at) = date('now')").get('play') as CountResult).count;
     return { totalClicks, totalPlays, todayClicks, todayPlays };
   }
 
@@ -283,7 +300,7 @@ class DatabaseService {
     if (!allowedSortBy.includes(sortBy)) sortBy = 'scanned_at';
     if (!allowedSortOrder.includes(sortOrder)) sortOrder = 'DESC';
 
-    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files').get() as any).count;
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files').get() as CountResult).count;
     const offset = (page - 1) * pageSize;
     const files = this.db.prepare(`SELECT * FROM files ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`).all(pageSize, offset);
     return { files, total };
@@ -291,7 +308,7 @@ class DatabaseService {
 
   // 搜索文件（分页）
   searchFilesPaginated(keyword: string, page: number = 1, pageSize: number = 10): { files: any[], total: number } {
-    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE filename LIKE ? OR relative_path LIKE ?').get(`%${keyword}%`, `%${keyword}%`) as any).count;
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE filename LIKE ? OR relative_path LIKE ?').get(`%${keyword}%`, `%${keyword}%`) as CountResult).count;
     const offset = (page - 1) * pageSize;
     const files = this.db.prepare('SELECT * FROM files WHERE filename LIKE ? OR relative_path LIKE ? ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(`%${keyword}%`, `%${keyword}%`, pageSize, offset);
     return { files, total };
@@ -304,7 +321,7 @@ class DatabaseService {
       JOIN file_tags ft ON f.id = ft.file_id
       JOIN tags t ON ft.tag_id = t.id
       WHERE t.name = ?
-    `).get(tagName) as any).count;
+    `).get(tagName) as CountResult).count;
     const offset = (page - 1) * pageSize;
     const files = this.db.prepare(`
       SELECT f.* FROM files f
@@ -318,7 +335,7 @@ class DatabaseService {
 
   // 按类型搜索（分页）
   searchByTypePaginated(fileType: string, page: number = 1, pageSize: number = 10): { files: any[], total: number } {
-    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE file_type = ?').get(fileType) as any).count;
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE file_type = ?').get(fileType) as CountResult).count;
     const offset = (page - 1) * pageSize;
     const files = this.db.prepare('SELECT * FROM files WHERE file_type = ? ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(fileType, pageSize, offset);
     return { files, total };
@@ -326,7 +343,7 @@ class DatabaseService {
 
   // 获取文件夹树
   getFolderTree(): any[] {
-    const rows = this.db.prepare("SELECT DISTINCT folder_hierarchy FROM files WHERE folder_hierarchy IS NOT NULL AND folder_hierarchy != '[]'").all() as any[];
+    const rows = this.db.prepare("SELECT DISTINCT folder_hierarchy FROM files WHERE folder_hierarchy IS NOT NULL AND folder_hierarchy != '[]'").all() as { folder_hierarchy: string }[];
     const tree: any[] = [];
 
     for (const row of rows) {
@@ -406,7 +423,7 @@ class DatabaseService {
 
   // 按文件夹路径筛选文件
   getFilesByFolder(folderPath: string, page: number = 1, pageSize: number = 10): { files: any[], total: number } {
-    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE relative_path LIKE ?').get(folderPath + '%') as any).count;
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE relative_path LIKE ?').get(folderPath + '%') as CountResult).count;
     const offset = (page - 1) * pageSize;
     const files = this.db.prepare('SELECT * FROM files WHERE relative_path LIKE ? ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(folderPath + '%', pageSize, offset);
     return { files, total };

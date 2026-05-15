@@ -9,6 +9,9 @@ scanRouter.post('/start', async (req, res) => {
   try {
     const { rootPath, scanType } = req.body;
     const path = rootPath || config.rootPath;
+    if (rootPath && typeof rootPath !== 'string') {
+      return res.status(400).json({ success: false, message: 'rootPath 必须为字符串' });
+    }
 
     logger.info(`收到扫描请求: ${path}, 类型: ${scanType || 'full'}`);
 

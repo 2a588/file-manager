@@ -7,14 +7,17 @@ export const statsRouter = Router();
 statsRouter.post('/record', (req, res) => {
   const { fileId, actionType } = req.body;
   
-  if (!fileId || !actionType) {
-    return res.status(400).json({ success: false, message: '参数不完整' });
+  if (!fileId || typeof fileId !== 'number') {
+    return res.status(400).json({ success: false, message: 'fileId 必须为数字' });
+  }
+  if (!actionType || !['click', 'play'].includes(actionType)) {
+    return res.status(400).json({ success: false, message: 'actionType 必须为 click 或 play' });
   }
   
   try {
     if (actionType === 'click') {
       db.recordFileClick(fileId);
-    } else if (actionType === 'play') {
+    } else {
       db.recordFilePlay(fileId);
     }
     res.json({ success: true });
