@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createScanner } from '../services/scanner';
+import { createScanner, scanProgress } from '../services/scanner';
 import { config } from '../../config/config';
 import { logger } from '../services/logger';
 
@@ -34,7 +34,14 @@ scanRouter.get('/status', (_req, res) => {
   res.json({
     success: true,
     data: {
-      status: 'idle',
+      status: scanProgress.status,
+      currentFile: scanProgress.currentFile,
+      currentPath: scanProgress.currentPath,
+      totalFiles: scanProgress.totalFiles,
+      processedFiles: scanProgress.processedFiles,
+      addedFiles: scanProgress.addedFiles,
+      skippedFiles: scanProgress.skippedFiles,
+      errors: scanProgress.errors,
     },
   });
 });

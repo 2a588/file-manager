@@ -266,11 +266,51 @@ class DatabaseService {
     `).all();
   }
 
-  // 分页获取文件
-  getFilesWithPagination(page: number = 1, pageSize: number = 10): { files: any[], total: number } {
+  // 分页获取文件（支持排序）
+  getFilesWithPagination(page: number = 1, pageSize: number = 10, sortBy: string = 'scanned_at', sortOrder: string = 'DESC'): { files: any[], total: number } {
+    const allowedSortBy = ['filename', 'file_size', 'modified_at', 'scanned_at', 'file_type'];
+    const allowedSortOrder = ['ASC', 'DESC'];
+    if (!allowedSortBy.includes(sortBy)) sortBy = 'scanned_at';
+    if (!allowedSortOrder.includes(sortOrder)) sortOrder = 'DESC';
+
     const total = (this.db.prepare('SELECT COUNT(*) as count FROM files').get() as any).count;
     const offset = (page - 1) * pageSize;
-    const files = this.db.prepare('SELECT * FROM files ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(pageSize, offset);
+    const files = this.db.prepare(`SELECT * FROM files ORDER BY ${sortBy} ${sortOrder} LIMIT ? OFFSET ?`).all(pageSize, offset);
+    return { files, total };
+  }
+
+  // 搜索文件（分页）
+  searchFilesPaginated(keyword: string, page: number = 1, pageSize: number = 10): { files: any[], total: number } {
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE filename LIKE ? OR relative_path LIKE ?').get(`%${keyword}%`, `%${keyword}%`) as any).count;
+    const offset = (page - 1) * pageSize;
+    const files = this.db.prepare('SELECT * FROM files WHERE filename LIKE ? OR relative_path LIKE ? ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(`%${keyword}%`, `%${keyword}%`, pageSize, offset);
+    return { files, total };
+  }
+
+  // 按标签搜索（分页）
+  searchByTagPaginated(tagName: string, page: number = 1, pageSize: number = 10): { files: any[], total: number } {
+    const total = (this.db.prepare(`
+      SELECT COUNT(*) as count FROM files f
+      JOIN file_tags ft ON f.id = ft.file_id
+      JOIN tags t ON ft.tag_id = t.id
+      WHERE t.name = ?
+    `).get(tagName) as any).count;
+    const offset = (page - 1) * pageSize;
+    const files = this.db.prepare(`
+      SELECT f.* FROM files f
+      JOIN file_tags ft ON f.id = ft.file_id
+      JOIN tags t ON ft.tag_id = t.id
+      WHERE t.name = ?
+      ORDER BY f.scanned_at DESC LIMIT ? OFFSET ?
+    `).all(tagName, pageSize, offset);
+    return { files, total };
+  }
+
+  // 按类型搜索（分页）
+  searchByTypePaginated(fileType: string, page: number = 1, pageSize: number = 10): { files: any[], total: number } {
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE file_type = ?').get(fileType) as any).count;
+    const offset = (page - 1) * pageSize;
+    const files = this.db.prepare('SELECT * FROM files WHERE file_type = ? ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(fileType, pageSize, offset);
     return { files, total };
   }
 }

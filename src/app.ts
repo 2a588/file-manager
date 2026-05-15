@@ -9,6 +9,7 @@ import { filesRouter } from './routes/files';
 import { searchRouter } from './routes/search';
 import { statsRouter } from './routes/stats';
 import { logger } from './services/logger';
+import { createScanner } from './services/scanner';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -63,6 +64,18 @@ app.get('/', (_req, res) => {
 app.listen(config.port, '0.0.0.0', () => {
   logger.info(`服务器运行在 http://0.0.0.0:${config.port}`);
   logger.info(`API文档: http://0.0.0.0:${config.port}/`);
+
+  if (config.autoScan?.enabled) {
+    const scanner = createScanner(config.rootPath);
+    scanner.scan('full').catch(err => logger.error(`自动扫描失败: ${err}`));
+
+    setInterval(() => {
+      const scanner = createScanner(config.rootPath);
+      scanner.scan('full').catch(err => logger.error(`定时扫描失败: ${err}`));
+    }, config.autoScan.interval || 3600000);
+
+    logger.info(`自动扫描已启用，间隔: ${(config.autoScan.interval || 3600000) / 60000}分钟`);
+  }
 });
 
 export default app;

@@ -865,7 +865,7 @@
 <body>
   <div class="header">
     <h1>📁 文件管理系统</h1>
-    <p>智能管理你的本地文件 · 支持视频、音频、文档、HTML</p>
+    <p>智能管理你的本地文件 · 支持视频、音频、文档、图片、HTML</p>
   </div>
   
   <div class="container">
@@ -899,6 +899,11 @@
           <div class="value" id="htmlCount">-</div>
           <div class="sub">网页文件</div>
         </div>
+        <div class="stat-card">
+          <div class="label">图片文件</div>
+          <div class="value" id="imageCount">-</div>
+          <div class="sub">JPG · PNG · GIF 等</div>
+        </div>
       </div>
       
       <!-- 工具栏 -->
@@ -907,11 +912,22 @@
         <select id="typeFilter">
           <option value="">所有类型</option>
           <option value="media">媒体文件</option>
+          <option value="image">图片文件</option>
           <option value="document">文档文件</option>
           <option value="html">HTML文件</option>
         </select>
         <select id="tagFilter">
           <option value="">所有标签</option>
+        </select>
+        <select id="sortBy" onchange="setSort()">
+          <option value="scanned_at">扫描时间</option>
+          <option value="filename">文件名</option>
+          <option value="file_size">文件大小</option>
+          <option value="modified_at">修改时间</option>
+        </select>
+        <select id="sortOrder" onchange="setSort()">
+          <option value="DESC">降序</option>
+          <option value="ASC">升序</option>
         </select>
         <div class="view-mode-toggle">
           <button id="gridViewBtn" onclick="setViewMode('grid')" title="图标视图">📊</button>
@@ -991,7 +1007,7 @@
       <h2>扫描文件目录</h2>
       <input type="text" id="scanPath" placeholder="输入文件目录路径，例如: /home/user/documents">
       <p style="font-size: 12px; color: #888; margin-top: -10px;">
-        支持的格式: MP4, MP3, OGG, PDF, TXT, DOC, HTML 等
+        支持的格式: MP4, MP3, JPG, PNG, PDF, TXT, DOC, HTML 等
       </p>
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="closeScanModal()">取消</button>
@@ -1036,11 +1052,25 @@
     // 展示模式状态
     let viewMode = localStorage.getItem('viewMode') || 'grid';
     
+    // 排序状态
+    let sortBy = 'scanned_at';
+    let sortOrder = 'DESC';
+    
+    // 查询模式: 'browse' | 'search' | 'typeFilter' | 'tagFilter'
+    let currentMode = 'browse';
+    let currentQuery = '';
+    
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
       loadStats();
       loadFiles();
       loadTags();
+      
+      // 从 localStorage 恢复排序偏好
+      sortBy = localStorage.getItem('sortBy') || 'scanned_at';
+      sortOrder = localStorage.getItem('sortOrder') || 'DESC';
+      document.getElementById('sortBy').value = sortBy;
+      document.getElementById('sortOrder').value = sortOrder;
       
       // 搜索防抖
       let searchTimeout;
@@ -1069,16 +1099,34 @@
           document.getElementById('mediaCount').textContent = byType.find(t => t.file_type === 'media')?.count || 0;
           document.getElementById('docCount').textContent = byType.find(t => t.file_type === 'document')?.count || 0;
           document.getElementById('htmlCount').textContent = byType.find(t => t.file_type === 'html')?.count || 0;
+          document.getElementById('imageCount').textContent = byType.find(t => t.file_type === 'image')?.count || 0;
         }
       } catch (err) {
         console.error('加载统计失败:', err);
       }
     }
     
-    // 加载文件列表
+    // 加载文件列表（根据当前模式自动选择接口）
     async function loadFiles() {
       try {
-        const res = await fetch(`${API_BASE}/api/files?page=${currentPage}&pageSize=${pageSize}`);
+        let url;
+        const params = new URLSearchParams();
+        params.set('page', String(currentPage));
+        params.set('pageSize', String(pageSize));
+
+        if (currentMode === 'search') {
+          url = `${API_BASE}/api/search?q=${encodeURIComponent(currentQuery)}&${params}`;
+        } else if (currentMode === 'typeFilter') {
+          url = `${API_BASE}/api/search?type=${currentQuery}&${params}`;
+        } else if (currentMode === 'tagFilter') {
+          url = `${API_BASE}/api/search?tag=${currentQuery}&${params}`;
+        } else {
+          params.set('sortBy', sortBy);
+          params.set('sortOrder', sortOrder);
+          url = `${API_BASE}/api/files?${params}`;
+        }
+
+        const res = await fetch(url);
         const data = await res.json();
         
         if (data.success) {
@@ -1123,6 +1171,16 @@
       
       document.getElementById('gridViewBtn').classList.toggle('active', mode === 'grid');
       document.getElementById('listViewBtn').classList.toggle('active', mode === 'list');
+    }
+    
+    // 设置排序
+    function setSort() {
+      sortBy = document.getElementById('sortBy').value;
+      sortOrder = document.getElementById('sortOrder').value;
+      localStorage.setItem('sortBy', sortBy);
+      localStorage.setItem('sortOrder', sortOrder);
+      currentPage = 1;
+      loadFiles();
     }
     
     // 切换页面
@@ -1200,6 +1258,7 @@
     function getTypeName(type) {
       const names = {
         media: '媒体文件',
+        image: '图片文件',
         document: '文档文件',
         html: 'HTML文件'
       };
@@ -1252,22 +1311,16 @@
     }
     
     // 搜索文件
-    async function searchFiles(keyword) {
-      if (!keyword) {
-        renderFiles(allFiles);
-        return;
+    function searchFiles(keyword) {
+      if (keyword) {
+        currentMode = 'search';
+        currentQuery = keyword;
+      } else {
+        currentMode = 'browse';
+        currentQuery = '';
       }
-      
-      try {
-        const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(keyword)}`);
-        const data = await res.json();
-        
-        if (data.success) {
-          renderFiles(data.data);
-        }
-      } catch (err) {
-        console.error('搜索失败:', err);
-      }
+      currentPage = 1;
+      loadFiles();
     }
     
     // 筛选文件
@@ -1275,27 +1328,18 @@
       const type = document.getElementById('typeFilter').value;
       const tag = document.getElementById('tagFilter').value;
       
-      let filtered = allFiles;
-      
-      if (type) {
-        filtered = filtered.filter(f => f.file_type === type);
-      }
-      
       if (tag) {
-        // 需要通过API获取标签下的文件
-        fetch(`${API_BASE}/api/search/tags/${tag}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success) {
-              const tagFileIds = data.data.map(f => f.id);
-              const result = filtered.filter(f => tagFileIds.includes(f.id));
-              renderFiles(result);
-            }
-          });
-        return;
+        currentMode = 'tagFilter';
+        currentQuery = tag;
+      } else if (type) {
+        currentMode = 'typeFilter';
+        currentQuery = type;
+      } else {
+        currentMode = 'browse';
+        currentQuery = '';
       }
-      
-      renderFiles(filtered);
+      currentPage = 1;
+      loadFiles();
     }
     
     // 渲染文件列表
@@ -1340,6 +1384,7 @@
         if (['mp3', 'ogg', 'wav', 'flac'].includes(ext)) return '🎵';
         return '🎥';
       }
+      if (type === 'image') return '🖼️';
       if (type === 'document') {
         if (ext === 'pdf') return '📄';
         if (ext === 'txt') return '📝';
@@ -1410,6 +1455,8 @@
         } else {
           body.innerHTML = '<p style="color: #888;">暂不支持预览此文档格式</p>';
         }
+      } else if (file.file_type === 'image') {
+        body.innerHTML = `<img src="${previewUrl}" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);" alt="${file.filename}">`;
       } else {
         body.innerHTML = '<p style="color: #888;">暂不支持预览此文件类型</p>';
       }
@@ -1491,10 +1538,37 @@
       modal.classList.remove('active');
     }
 
-    // ESC 键关闭预览
+    // 键盘快捷键
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closePreview();
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+      switch (e.key) {
+        case 'Escape':
+          closePreview();
+          closeScanModal();
+          break;
+        case 'f':
+          e.preventDefault();
+          document.getElementById('searchInput').focus();
+          break;
+        case 'n':
+          document.getElementById('nextPage')?.click();
+          break;
+        case 'p':
+          document.getElementById('prevPage')?.click();
+          break;
+        case 'g':
+          setViewMode('grid');
+          break;
+        case 'l':
+          setViewMode('list');
+          break;
+        case 's':
+          switchTab('stats');
+          break;
+        case 'b':
+          switchTab('files');
+          break;
       }
     });
 

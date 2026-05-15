@@ -11,6 +11,28 @@ interface ScanResult {
   errors: string[];
 }
 
+export interface ScanProgress {
+  status: 'idle' | 'scanning' | 'completed' | 'failed';
+  currentFile: string;
+  currentPath: string;
+  totalFiles: number;
+  processedFiles: number;
+  addedFiles: number;
+  skippedFiles: number;
+  errors: string[];
+}
+
+export const scanProgress: ScanProgress = {
+  status: 'idle',
+  currentFile: '',
+  currentPath: '',
+  totalFiles: 0,
+  processedFiles: 0,
+  addedFiles: 0,
+  skippedFiles: 0,
+  errors: [],
+};
+
 class ScannerService {
   private rootPath: string;
   private result: ScanResult;
@@ -30,8 +52,19 @@ class ScannerService {
     logger.info(`开始扫描目录: ${this.rootPath}`);
     this.scanLogId = db.insertScanLog(this.rootPath, scanType);
 
+    scanProgress.status = 'scanning';
+    scanProgress.currentPath = this.rootPath;
+    scanProgress.currentFile = '';
+    scanProgress.totalFiles = 0;
+    scanProgress.processedFiles = 0;
+    scanProgress.addedFiles = 0;
+    scanProgress.skippedFiles = 0;
+    scanProgress.errors = [];
+
     try {
       await this.scanDirectory(this.rootPath);
+
+      scanProgress.status = 'completed';
 
       db.updateScanLog(this.scanLogId, {
         filesFound: this.result.totalFiles,
@@ -43,6 +76,7 @@ class ScannerService {
 
       logger.info(`扫描完成: 总计${this.result.totalFiles}个文件，新增${this.result.addedFiles}个，跳过${this.result.skippedFiles}个`);
     } catch (error) {
+      scanProgress.status = 'failed';
       if (this.scanLogId) {
         db.updateScanLog(this.scanLogId, { status: 'failed', errors: String(error) });
       }
@@ -75,10 +109,14 @@ class ScannerService {
 
   private async processFile(filePath: string) {
     this.result.totalFiles++;
+    scanProgress.totalFiles = this.result.totalFiles;
+    scanProgress.currentFile = filePath;
+    scanProgress.processedFiles++;
 
     try {
       if (db.fileExists(filePath)) {
         this.result.skippedFiles++;
+        scanProgress.skippedFiles = this.result.skippedFiles;
         return;
       }
 
@@ -93,6 +131,7 @@ class ScannerService {
 
       if (!fileType) {
         this.result.skippedFiles++;
+        scanProgress.skippedFiles = this.result.skippedFiles;
         return;
       }
 
@@ -113,6 +152,7 @@ class ScannerService {
       await this.addTags(fileId, folderHierarchy, extension, fileType);
 
       this.result.addedFiles++;
+      scanProgress.addedFiles = this.result.addedFiles;
       logger.info(`已添加: ${relativePath}`);
     } catch (error) {
       const errorMsg = `处理文件失败: ${filePath} - ${error}`;
