@@ -5,69 +5,145 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>文件管理系统</title>
   <style>
+    :root {
+      --bg: #f5f7fa;
+      --card-bg: #ffffff;
+      --text: #333333;
+      --text-secondary: #888888;
+      --text-muted: #666666;
+      --border: #e0e0e0;
+      --shadow: rgba(0,0,0,0.08);
+      --shadow-hover: rgba(0,0,0,0.12);
+      --primary: #667eea;
+      --primary-hover: #5a6fd6;
+      --danger: #ff6b6b;
+      --danger-hover: #ee5a5a;
+      --tag-bg: #f0f0f0;
+      --overlay: rgba(0,0,0,0.5);
+      --header-from: #667eea;
+      --header-to: #764ba2;
+    }
+    .dark-mode {
+      --bg: #0f0f1a;
+      --card-bg: #1a1a2e;
+      --text: #e0e0e0;
+      --text-secondary: #999999;
+      --text-muted: #777777;
+      --border: #2a2a4a;
+      --shadow: rgba(0,0,0,0.3);
+      --shadow-hover: rgba(0,0,0,0.4);
+      --tag-bg: #2a2a4a;
+      --overlay: rgba(0,0,0,0.7);
+      --header-from: #1a1a2e;
+      --header-to: #0f0f1a;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; min-height: 100vh; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); transition: background 0.3s, color 0.3s; }
     
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .header h1 { font-size: 24px; margin-bottom: 5px; }
-    .header p { opacity: 0.9; font-size: 14px; }
+    .header { background: linear-gradient(135deg, var(--header-from) 0%, var(--header-to) 100%); color: white; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+    .header-left h1 { font-size: 24px; margin-bottom: 5px; }
+    .header-left p { opacity: 0.9; font-size: 14px; }
+    .header-actions { display: flex; gap: 10px; align-items: center; }
+    .dark-toggle { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: background 0.2s; }
+    .dark-toggle:hover { background: rgba(255,255,255,0.3); }
     
     .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
     
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .stat-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .stat-card .label { color: #888; font-size: 13px; margin-bottom: 5px; }
-    .stat-card .value { font-size: 28px; font-weight: 700; color: #333; }
-    .stat-card .sub { font-size: 12px; color: #666; margin-top: 5px; }
+    .stat-card { background: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px var(--shadow); transition: background 0.3s; }
+    .stat-card .label { color: var(--text-secondary); font-size: 13px; margin-bottom: 5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; color: var(--text); }
+    .stat-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
     
-    .toolbar { background: white; border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .toolbar input, .toolbar select { padding: 10px 15px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+    .toolbar { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px var(--shadow); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; transition: background 0.3s; }
+    .toolbar input, .toolbar select { padding: 10px 15px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
     .toolbar input { flex: 1; min-width: 200px; }
     .toolbar select { min-width: 120px; }
     
     .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-    .btn-primary { background: #667eea; color: white; }
-    .btn-primary:hover { background: #5a6fd6; }
-    .btn-danger { background: #ff6b6b; color: white; }
-    .btn-danger:hover { background: #ee5a5a; }
-    .btn-secondary { background: #e0e0e0; color: #333; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-secondary { background: var(--border); color: var(--text); }
     .btn-secondary:hover { background: #d0d0d0; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
     
     .files-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-    .file-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.2s; cursor: pointer; }
-    .file-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .file-card { background: var(--card-bg); border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px var(--shadow); transition: all 0.2s; cursor: pointer; position: relative; }
+    .file-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px var(--shadow-hover); }
+    .file-card .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .file-card .card-check { margin-right: 8px; margin-top: 2px; }
     .file-card .icon { font-size: 40px; margin-bottom: 10px; }
-    .file-card .name { font-weight: 600; color: #333; margin-bottom: 5px; word-break: break-all; }
-    .file-card .meta { font-size: 12px; color: #888; margin-bottom: 8px; }
+    .file-card .name { font-weight: 600; color: var(--text); margin-bottom: 5px; word-break: break-all; }
+    .file-card .meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
     .file-card .tags { display: flex; flex-wrap: wrap; gap: 5px; }
-    .file-card .tag { background: #f0f0f0; padding: 3px 8px; border-radius: 4px; font-size: 11px; color: #666; }
+    .file-card .tag { background: var(--tag-bg); padding: 3px 8px; border-radius: 4px; font-size: 11px; color: var(--text-muted); }
     
     .file-card .type-media { color: #ff6b6b; }
     .file-card .type-document { color: #4ecdc4; }
     .file-card .type-html { color: #ffd93d; }
+    .file-card .type-image { color: #45b7d1; }
     
-    .scan-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+    .bookmark-btn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px; opacity: 0.4; transition: all 0.2s; line-height: 1; }
+    .bookmark-btn:hover { opacity: 0.8; transform: scale(1.2); }
+    .bookmark-btn.active { opacity: 1; }
+    
+    .batch-bar { display: none; background: var(--primary); color: white; border-radius: 8px; padding: 10px 15px; margin-bottom: 10px; align-items: center; gap: 15px; flex-wrap: wrap; }
+    .batch-bar.show { display: flex; }
+    .batch-bar .count { font-weight: 600; }
+    .batch-bar .btn { background: rgba(255,255,255,0.2); color: white; }
+    .batch-bar .btn:hover { background: rgba(255,255,255,0.3); }
+    
+    .scan-modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--overlay); z-index: 100; justify-content: center; align-items: center; }
     .scan-modal.active { display: flex; }
-    .modal-content { background: white; border-radius: 16px; padding: 30px; width: 90%; max-width: 500px; }
-    .modal-content h2 { margin-bottom: 20px; }
-    .modal-content input { width: 100%; padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
+    .modal-content { background: var(--card-bg); border-radius: 16px; padding: 30px; width: 90%; max-width: 500px; }
+    .modal-content h2 { margin-bottom: 20px; color: var(--text); }
+    .modal-content input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; font-size: 14px; background: var(--bg); color: var(--text); }
     .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
     
-    .loading { text-align: center; padding: 40px; color: #888; }
-    .spinner { display: inline-block; width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
+    .loading { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .spinner { display: inline-block; width: 40px; height: 40px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 15px 25px; border-radius: 8px; z-index: 200; display: none; }
     .toast.success { background: #4ecdc4; }
-    .toast.error { background: #ff6b6b; }
+    .toast.error { background: var(--danger); }
     
     .tag-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
     .tag-filter .tag { padding: 6px 12px; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
-    .tag-filter .tag:hover, .tag-filter .tag.active { background: #667eea; color: white; }
+    .tag-filter .tag:hover, .tag-filter .tag.active { background: var(--primary); color: white; }
     
-    .empty-state { text-align: center; padding: 60px 20px; color: #888; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
     .empty-state .icon { font-size: 60px; margin-bottom: 15px; }
+
+    /* Folder tree sidebar */
+    .layout-wrapper { display: flex; gap: 20px; }
+    .sidebar { width: 260px; flex-shrink: 0; background: var(--card-bg); border-radius: 12px; box-shadow: 0 2px 8px var(--shadow); padding: 15px; max-height: 70vh; overflow-y: auto; display: none; transition: background 0.3s; }
+    .sidebar.show { display: block; }
+    .sidebar h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .sidebar-content { width: 100%; }
+    .folder-item { padding: 6px 10px; cursor: pointer; border-radius: 6px; color: var(--text); font-size: 13px; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .folder-item:hover { background: var(--tag-bg); }
+    .folder-item.active { background: var(--primary); color: white; }
+    .folder-item .arrow { font-size: 10px; width: 14px; text-align: center; transition: transform 0.2s; }
+    .folder-item .arrow.expanded { transform: rotate(90deg); }
+    .folder-children { padding-left: 20px; }
+    .folder-children.hidden { display: none; }
+    .main-content { flex: 1; min-width: 0; }
+
+    /* Duplicates / Recent */
+    .dup-group { background: var(--card-bg); border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px var(--shadow); }
+    .dup-group h4 { font-size: 14px; margin-bottom: 8px; color: var(--text); }
+    .dup-group .dup-meta { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+    .dup-file { padding: 6px 10px; background: var(--bg); border-radius: 6px; margin-bottom: 4px; font-size: 13px; word-break: break-all; cursor: pointer; }
+    .dup-file:hover { opacity: 0.8; }
+
+    .recent-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .recent-item { background: var(--card-bg); border-radius: 10px; padding: 12px; box-shadow: 0 1px 4px var(--shadow); cursor: pointer; transition: all 0.2s; }
+    .recent-item:hover { transform: translateY(-1px); }
 
     /* 分页组件 */
     .pagination {
@@ -864,15 +940,22 @@
 </head>
 <body>
   <div class="header">
-    <h1>📁 文件管理系统</h1>
-    <p>智能管理你的本地文件 · 支持视频、音频、文档、图片、HTML</p>
+    <div class="header-left">
+      <h1>📁 文件管理系统</h1>
+      <p>智能管理你的本地文件 · 支持视频、音频、文档、图片、HTML</p>
+    </div>
+    <div class="header-actions">
+      <button class="dark-toggle" onclick="toggleDarkMode()" title="切换暗色模式">🌙</button>
+    </div>
   </div>
   
   <div class="container">
     <!-- 导航标签 -->
     <div class="nav-tabs">
       <button class="nav-tab active" onclick="switchTab('files')">📁 文件管理</button>
+      <button class="nav-tab" onclick="switchTab('recent')">🕐 最近文件</button>
       <button class="nav-tab" onclick="switchTab('stats')">📊 统计分析</button>
+      <button class="nav-tab" onclick="switchTab('duplicates')">🔁 重复文件</button>
     </div>
 
     <!-- 文件管理页面 -->
@@ -933,30 +1016,48 @@
           <button id="gridViewBtn" onclick="setViewMode('grid')" title="图标视图">📊</button>
           <button id="listViewBtn" onclick="setViewMode('list')" title="列表视图">📋</button>
         </div>
+        <button class="btn btn-secondary" onclick="toggleFolderSidebar()" title="文件夹树">📂 目录</button>
         <button class="btn btn-primary" onclick="openScanModal()">🔍 扫描文件</button>
         <button class="btn btn-secondary" onclick="refreshFiles()">🔄 刷新</button>
       </div>
       
-      <!-- 文件列表 -->
-      <div id="filesContainer" class="files-grid">
-        <div class="loading">
-          <div class="spinner"></div>
-          <p>加载中...</p>
-        </div>
+      <!-- 批量操作栏 -->
+      <div id="batchBar" class="batch-bar">
+        <span class="count">已选择 <span id="selectedCount">0</span> 个文件</span>
+        <button class="btn btn-sm" onclick="batchDelete()">🗑️ 批量删除</button>
+        <button class="btn btn-sm" onclick="clearSelection()">取消选择</button>
       </div>
       
-      <!-- 分页组件 -->
-      <div class="pagination">
-        <button id="prevPage" onclick="changePage(-1)">上一页</button>
-        <span class="page-info">
-          第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">1</span> 页
-        </span>
-        <button id="nextPage" onclick="changePage(1)">下一页</button>
-        <select id="pageSize" onchange="changePageSize()">
-          <option value="10">10条/页</option>
-          <option value="20">20条/页</option>
-          <option value="50">50条/页</option>
-        </select>
+      <!-- 文件列表区域（带侧栏） -->
+      <div class="layout-wrapper">
+        <div id="folderSidebar" class="sidebar">
+          <h3>📂 文件夹</h3>
+          <div id="folderTree" class="sidebar-content">
+            <div class="loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+        <div class="main-content">
+          <div id="filesContainer" class="files-grid">
+            <div class="loading">
+              <div class="spinner"></div>
+              <p>加载中...</p>
+            </div>
+          </div>
+          
+          <!-- 分页组件 -->
+          <div class="pagination">
+            <button id="prevPage" onclick="changePage(-1)">上一页</button>
+            <span class="page-info">
+              第 <span id="currentPage">1</span> 页 / 共 <span id="totalPages">1</span> 页
+            </span>
+            <button id="nextPage" onclick="changePage(1)">下一页</button>
+            <select id="pageSize" onchange="changePageSize()">
+              <option value="10">10条/页</option>
+              <option value="20">20条/页</option>
+              <option value="50">50条/页</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -995,6 +1096,27 @@
       <div class="stats-section">
         <h3>📊 按类型统计</h3>
         <div id="typeStats" class="type-stats">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 最近文件页面 -->
+    <div id="recentPage" class="page">
+      <div class="stats-section">
+        <h3>🕐 最近 7 天添加的文件</h3>
+        <div id="recentFiles" class="recent-list">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 重复文件页面 -->
+    <div id="duplicatesPage" class="page">
+      <div class="stats-section">
+        <h3>🔁 重复文件检测</h3>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 15px;">以下文件具有相同的文件名和大小，可能是重复文件</p>
+        <div id="duplicateFiles">
           <div class="loading"><div class="spinner"></div></div>
         </div>
       </div>
@@ -1060,11 +1182,18 @@
     let currentMode = 'browse';
     let currentQuery = '';
     
+    // 书签状态
+    let bookmarkedIds = new Set();
+    
+    // 批量选择
+    let selectedIds = new Set();
+    
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
       loadStats();
       loadFiles();
       loadTags();
+      loadBookmarked();
       
       // 从 localStorage 恢复排序偏好
       sortBy = localStorage.getItem('sortBy') || 'scanned_at';
@@ -1078,6 +1207,19 @@
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => searchFiles(e.target.value), 300);
       });
+      
+      document.getElementById('typeFilter').addEventListener('change', filterFiles);
+      document.getElementById('tagFilter').addEventListener('change', filterFiles);
+      
+      // 初始化展示模式
+      setViewMode(viewMode);
+      
+      // 初始化暗色模式
+      if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+        document.querySelector('.dark-toggle').textContent = '☀️';
+      }
+    });
       
       document.getElementById('typeFilter').addEventListener('change', filterFiles);
       document.getElementById('tagFilter').addEventListener('change', filterFiles);
@@ -1189,10 +1331,15 @@
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
       
       document.getElementById(tab + 'Page').classList.add('active');
-      document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+      const tabBtn = document.querySelector(`[onclick="switchTab('${tab}')"]`);
+      if (tabBtn) tabBtn.classList.add('active');
       
       if (tab === 'stats') {
         loadStatsData();
+      } else if (tab === 'recent') {
+        loadRecentFiles();
+      } else if (tab === 'duplicates') {
+        loadDuplicateFiles();
       }
     }
     
@@ -1362,15 +1509,25 @@
         const size = formatSize(file.file_size);
         const tags = JSON.parse(file.folder_hierarchy || '[]');
         const date = new Date(file.scanned_at).toLocaleDateString('zh-CN');
+        const isBookmarked = bookmarkedIds.has(file.id);
+        const isSelected = selectedIds.has(file.id);
         
         return `
-          <div class="file-card" onclick="showFileDetail(${file.id})">
-            <div class="icon type-${file.file_type}">${icon}</div>
-            <div class="name">${file.filename}</div>
-            <div class="meta">${size} · ${date}</div>
-            <div class="tags">
-              <span class="tag">${file.file_type}</span>
-              ${tags.map(t => `<span class="tag">${t}</span>`).join('')}
+          <div class="file-card ${isSelected ? 'selected' : ''}">
+            <div class="card-top">
+              <div style="display:flex;align-items:center;flex:1;min-width:0;cursor:pointer;" onclick="showFileDetail(${file.id})">
+                <input type="checkbox" class="card-check" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleSelect(${file.id})">
+                <div class="icon type-${file.file_type}">${icon}</div>
+              </div>
+              <button class="bookmark-btn ${isBookmarked ? 'active' : ''}" onclick="event.stopPropagation();toggleBookmark(${file.id}, this)" title="书签">${isBookmarked ? '⭐' : '☆'}</button>
+            </div>
+            <div style="cursor:pointer;" onclick="showFileDetail(${file.id})">
+              <div class="name">${file.filename}</div>
+              <div class="meta">${size} · ${date}</div>
+              <div class="tags">
+                <span class="tag">${file.file_type}</span>
+                ${tags.map(t => `<span class="tag">${t}</span>`).join('')}
+              </div>
             </div>
           </div>
         `;
@@ -1776,6 +1933,215 @@
       setTimeout(() => {
         toast.style.display = 'none';
       }, 3000);
+    }
+
+    // ===== MVP2 新功能 =====
+
+    // 暗色模式
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      document.querySelector('.dark-toggle').textContent = isDark ? '☀️' : '🌙';
+    }
+
+    // 加载书签
+    async function loadBookmarked() {
+      try {
+        const res = await fetch(`${API_BASE}/api/files/bookmarked`);
+        const data = await res.json();
+        if (data.success) {
+          bookmarkedIds = new Set(data.data.map(f => f.id));
+        }
+      } catch (err) {
+        console.error('加载书签失败:', err);
+      }
+    }
+
+    // 切换书签
+    async function toggleBookmark(fileId, btn) {
+      try {
+        const res = await fetch(`${API_BASE}/api/files/${fileId}/bookmark`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          if (data.data.bookmarked) {
+            bookmarkedIds.add(fileId);
+            btn.textContent = '⭐';
+            btn.classList.add('active');
+          } else {
+            bookmarkedIds.delete(fileId);
+            btn.textContent = '☆';
+            btn.classList.remove('active');
+          }
+        }
+      } catch (err) {
+        console.error('切换书签失败:', err);
+      }
+    }
+
+    // 文件夹侧栏
+    let folderSidebarVisible = false;
+
+    function toggleFolderSidebar() {
+      folderSidebarVisible = !folderSidebarVisible;
+      document.getElementById('folderSidebar').classList.toggle('show', folderSidebarVisible);
+      if (folderSidebarVisible) loadFolderTree();
+    }
+
+    async function loadFolderTree() {
+      const container = document.getElementById('folderTree');
+      try {
+        const res = await fetch(`${API_BASE}/api/files/folders`);
+        const data = await res.json();
+        if (data.success) {
+          container.innerHTML = buildFolderTreeHTML(data.data);
+        }
+      } catch (err) {
+        container.innerHTML = '<p style="color:var(--text-secondary);">加载失败</p>';
+      }
+    }
+
+    function buildFolderTreeHTML(tree) {
+      if (!tree || tree.length === 0) return '<p style="color:var(--text-secondary);font-size:13px;">暂无文件夹</p>';
+      return tree.map(node => `
+        <div>
+          <div class="folder-item" onclick="selectFolder('${node.path}', this)">
+            ${node.children.length > 0 ? `<span class="arrow" onclick="event.stopPropagation();toggleFolderExpand(this)">▶</span>` : '<span style="width:14px"></span>'}
+            📁 ${node.name}
+          </div>
+          ${node.children.length > 0 ? `<div class="folder-children hidden">${buildFolderTreeHTML(node.children)}</div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function toggleFolderExpand(arrow) {
+      arrow.classList.toggle('expanded');
+      const children = arrow.parentElement.parentElement.querySelector('.folder-children');
+      if (children) children.classList.toggle('hidden');
+    }
+
+    function selectFolder(path, el) {
+      document.querySelectorAll('.folder-item').forEach(e => e.classList.remove('active'));
+      el.classList.add('active');
+      currentMode = 'browse';
+      currentQuery = '';
+      fetchFilesByFolder(path);
+    }
+
+    async function fetchFilesByFolder(path) {
+      try {
+        const res = await fetch(`${API_BASE}/api/files/folder?path=${encodeURIComponent(path)}&page=${currentPage}&pageSize=${pageSize}`);
+        const data = await res.json();
+        if (data.success) {
+          allFiles = data.data;
+          renderFiles(allFiles);
+          updatePagination(data.pagination);
+        }
+      } catch (err) {
+        showToast('加载文件夹文件失败', 'error');
+      }
+    }
+
+    // 批量选择
+    function toggleSelect(fileId) {
+      if (selectedIds.has(fileId)) {
+        selectedIds.delete(fileId);
+      } else {
+        selectedIds.add(fileId);
+      }
+      updateBatchBar();
+      renderFiles(allFiles);
+    }
+
+    function clearSelection() {
+      selectedIds.clear();
+      updateBatchBar();
+      renderFiles(allFiles);
+    }
+
+    function updateBatchBar() {
+      const bar = document.getElementById('batchBar');
+      const count = document.getElementById('selectedCount');
+      count.textContent = selectedIds.size;
+      bar.classList.toggle('show', selectedIds.size > 0);
+    }
+
+    async function batchDelete() {
+      const ids = Array.from(selectedIds);
+      if (ids.length === 0) return;
+      if (!confirm(`确定要删除 ${ids.length} 个文件记录吗？`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/files/batch-delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message, 'success');
+          clearSelection();
+          loadStats();
+          loadFiles();
+        }
+      } catch (err) {
+        showToast('批量删除失败', 'error');
+      }
+    }
+
+    // 最近文件
+    async function loadRecentFiles() {
+      const container = document.getElementById('recentFiles');
+      try {
+        const res = await fetch(`${API_BASE}/api/files/recent?days=7`);
+        const data = await res.json();
+        if (data.success) {
+          if (data.data.length === 0) {
+            container.innerHTML = '<div class="empty-state"><div class="icon">🕐</div><p>最近 7 天没有新增文件</p></div>';
+            return;
+          }
+          container.innerHTML = data.data.map(file => `
+            <div class="recent-item" onclick="showFileDetail(${file.id})">
+              <div style="font-size:24px;margin-bottom:5px;">${getFileIcon(file.file_type, file.file_extension)}</div>
+              <div style="font-weight:600;font-size:14px;word-break:break-all;">${file.filename}</div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">
+                ${formatSize(file.file_size)} · ${new Date(file.scanned_at).toLocaleDateString('zh-CN')}
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        container.innerHTML = '<p style="color:var(--text-secondary);">加载失败</p>';
+      }
+    }
+
+    // 重复文件
+    async function loadDuplicateFiles() {
+      const container = document.getElementById('duplicateFiles');
+      try {
+        const res = await fetch(`${API_BASE}/api/files/duplicates`);
+        const data = await res.json();
+        if (data.success) {
+          if (data.data.length === 0) {
+            container.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>未发现重复文件</p></div>';
+            return;
+          }
+          container.innerHTML = data.data.map(group => {
+            const paths = group.paths.split('|||');
+            const ids = group.ids.split(',');
+            return `
+              <div class="dup-group">
+                <h4>📄 ${group.filename}</h4>
+                <div class="dup-meta">大小: ${formatSize(group.file_size)} · 重复 ${group.count} 份</div>
+                ${paths.map((p, i) => `
+                  <div class="dup-file" onclick="showFileDetail(${ids[i]})">📎 ${p}</div>
+                `).join('')}
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        container.innerHTML = '<p style="color:var(--text-secondary);">加载失败</p>';
+      }
     }
   </script>
 </body>

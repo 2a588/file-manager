@@ -29,6 +29,66 @@ filesRouter.get('/stats', (_req, res) => {
   res.json({ success: true, data: stats });
 });
 
+filesRouter.get('/folders', (_req, res) => {
+  const tree = db.getFolderTree();
+  res.json({ success: true, data: tree });
+});
+
+filesRouter.get('/recent', (req, res) => {
+  const days = parseInt(req.query.days as string) || 7;
+  const files = db.getRecentFiles(days);
+  res.json({ success: true, data: files });
+});
+
+filesRouter.get('/duplicates', (_req, res) => {
+  const duplicates = db.getDuplicateFiles();
+  res.json({ success: true, data: duplicates });
+});
+
+filesRouter.get('/bookmarked', (_req, res) => {
+  const files = db.getBookmarkedFiles();
+  res.json({ success: true, data: files });
+});
+
+filesRouter.post('/batch-delete', (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ success: false, message: '请提供要删除的文件ID列表' });
+  }
+  const deleted = db.batchDeleteFiles(ids);
+  res.json({ success: true, message: `已删除 ${deleted} 个文件` });
+});
+
+filesRouter.post('/:id/bookmark', (req, res) => {
+  const id = parseInt(req.params.id);
+  const file = db.getFileById(id);
+  if (!file) {
+    return res.status(404).json({ success: false, message: '文件未找到' });
+  }
+  const bookmarked = db.toggleBookmark(id);
+  res.json({ success: true, data: { bookmarked } });
+});
+
+filesRouter.get('/folder', (req, res) => {
+  const path = req.query.path as string;
+  if (!path) {
+    return res.status(400).json({ success: false, message: '请提供文件夹路径' });
+  }
+  const page = parseInt(req.query.page as string) || 1;
+  const pageSize = parseInt(req.query.pageSize as string) || 10;
+  const result = db.getFilesByFolder(path, page, pageSize);
+  res.json({
+    success: true,
+    data: result.files,
+    pagination: {
+      page,
+      pageSize,
+      total: result.total,
+      totalPages: Math.ceil(result.total / pageSize),
+    },
+  });
+});
+
 filesRouter.get('/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const file = db.getFileById(id);

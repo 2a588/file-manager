@@ -84,6 +84,16 @@ class DatabaseService {
     // 创建索引
     this.db.exec(`CREATE INDEX IF NOT EXISTS idx_file_stats_file_id ON file_stats(file_id)`);
     this.db.exec(`CREATE INDEX IF NOT EXISTS idx_file_stats_created_at ON file_stats(created_at)`);
+
+    // 创建书签表
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS bookmarks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        file_id INTEGER NOT NULL UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
+      )
+    `);
   }
 
   insertFile(fileData: {
@@ -311,6 +321,94 @@ class DatabaseService {
     const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE file_type = ?').get(fileType) as any).count;
     const offset = (page - 1) * pageSize;
     const files = this.db.prepare('SELECT * FROM files WHERE file_type = ? ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(fileType, pageSize, offset);
+    return { files, total };
+  }
+
+  // 获取文件夹树
+  getFolderTree(): any[] {
+    const rows = this.db.prepare("SELECT DISTINCT folder_hierarchy FROM files WHERE folder_hierarchy IS NOT NULL AND folder_hierarchy != '[]'").all() as any[];
+    const tree: any[] = [];
+
+    for (const row of rows) {
+      const parts = JSON.parse(row.folder_hierarchy);
+      let currentLevel = tree;
+      let currentPath = '';
+      for (const part of parts) {
+        if (!part) continue;
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
+        let existing = currentLevel.find((n: any) => n.name === part);
+        if (!existing) {
+          existing = { name: part, path: currentPath, children: [] };
+          currentLevel.push(existing);
+        }
+        currentLevel = existing.children;
+      }
+    }
+
+    return tree;
+  }
+
+  // 书签
+  toggleBookmark(fileId: number): boolean {
+    const existing = this.db.prepare('SELECT id FROM bookmarks WHERE file_id = ?').get(fileId);
+    if (existing) {
+      this.db.prepare('DELETE FROM bookmarks WHERE file_id = ?').run(fileId);
+      return false;
+    }
+    this.db.prepare('INSERT INTO bookmarks (file_id) VALUES (?)').run(fileId);
+    return true;
+  }
+
+  getBookmarkedFiles(): any[] {
+    return this.db.prepare(`
+      SELECT f.* FROM files f
+      JOIN bookmarks b ON f.id = b.file_id
+      ORDER BY b.created_at DESC
+    `).all();
+  }
+
+  isBookmarked(fileId: number): boolean {
+    return !!this.db.prepare('SELECT id FROM bookmarks WHERE file_id = ?').get(fileId);
+  }
+
+  // 最近文件
+  getRecentFiles(days: number = 7): any[] {
+    const stmt = this.db.prepare(`SELECT * FROM files WHERE scanned_at >= datetime('now', '-${days} days') ORDER BY scanned_at DESC`);
+    return stmt.all();
+  }
+
+  // 重复文件
+  getDuplicateFiles(): any[] {
+    return this.db.prepare(`
+      SELECT filename, file_size, COUNT(*) as count,
+        GROUP_CONCAT(id) as ids,
+        GROUP_CONCAT(original_path, '|||') as paths
+      FROM files
+      GROUP BY filename, file_size
+      HAVING COUNT(*) > 1
+      ORDER BY COUNT(*) DESC
+    `).all();
+  }
+
+  // 批量删除
+  batchDeleteFiles(ids: number[]): number {
+    const stmt = this.db.prepare('DELETE FROM files WHERE id = ?');
+    const del = this.db.transaction((ids: number[]) => {
+      let count = 0;
+      for (const id of ids) {
+        stmt.run(id);
+        count++;
+      }
+      return count;
+    });
+    return del(ids);
+  }
+
+  // 按文件夹路径筛选文件
+  getFilesByFolder(folderPath: string, page: number = 1, pageSize: number = 10): { files: any[], total: number } {
+    const total = (this.db.prepare('SELECT COUNT(*) as count FROM files WHERE relative_path LIKE ?').get(folderPath + '%') as any).count;
+    const offset = (page - 1) * pageSize;
+    const files = this.db.prepare('SELECT * FROM files WHERE relative_path LIKE ? ORDER BY scanned_at DESC LIMIT ? OFFSET ?').all(folderPath + '%', pageSize, offset);
     return { files, total };
   }
 }
